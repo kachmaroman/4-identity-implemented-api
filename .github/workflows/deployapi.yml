@@ -5,6 +5,9 @@ name: Deploy Munson Pickles API
 on:
   workflow_dispatch:
 
+env:
+  AZURE_WEBAPP_NAME: "app-munson-api-westus-dev-001"
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -19,4 +22,16 @@ jobs:
         run: dotnet restore ./MunsonPickles.Api/MunsonPickles.Api.csproj
 
       - name: Build
-        run: dotnet build ./MunsonPickles.Api/MunsonPickles.Api.csproj -c Release --no-restore        
+        run: dotnet build ./MunsonPickles.Api/MunsonPickles.Api.csproj -c Release --no-restore
+
+      # publish
+      - name: Publish
+        run: dotnet publish ./MunsonPickles.Api/MunsonPickles.Api.csproj -c Release -o ./publish
+
+      # deploy to Azure
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.API_PUBLISH_SECRET_PROFILE }}
+          package: ./publish
